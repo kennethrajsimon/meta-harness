@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meta-harness://schemas/progress",
+  "title": "Progress",
+  "type": "object",
+  "required": ["leaseId", "nodeId"],
+  "additionalProperties": false,
+  "properties": {
+    "leaseId": { "type": "string", "minLength": 1 },
+    "nodeId": { "type": "string", "pattern": "^n[0-9]+$" },
+    "pct": { "type": "number", "minimum": 0, "maximum": 100 },
+    "note": { "type": "string", "maxLength": 2000 }
+  }
+}

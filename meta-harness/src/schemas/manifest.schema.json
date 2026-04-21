@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meta-harness://schemas/manifest",
+  "title": "AgentManifest",
+  "type": "object",
+  "required": ["agent", "version", "pubkey", "capabilities", "models", "nonce", "issuedAt", "signature"],
+  "additionalProperties": false,
+  "properties": {
+    "agent": { "type": "string", "pattern": "^[a-z][a-z0-9_-]{1,63}$" },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "pubkey": { "type": "string", "minLength": 43, "maxLength": 44 },
+    "capabilities": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1, "maxLength": 64 },
+      "minItems": 1,
+      "maxItems": 64
+    },
+    "models": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["opus", "sonnet", "haiku"] },
+      "minItems": 1
+    },
+    "rateLimit": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "rpm": { "type": "integer", "minimum": 1, "maximum": 1000 }
+      }
+    },
+    "nonce": { "type": "string", "format": "uuid" },
+    "issuedAt": { "type": "string", "format": "date-time" },
+    "signature": { "type": "string", "minLength": 1 },
+    "public": { "type": "boolean", "default": false }
+  }
+}

@@ -1,0 +1,6 @@
+node_modules/
+# Runtime data — private keys, tokens, mission state, metrics snapshots
+data/
+!data/metering/
+!data/metering/rates.json
+*.log

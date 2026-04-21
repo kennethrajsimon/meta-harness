@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meta-harness://schemas/dagNode",
+  "title": "DagNode",
+  "type": "object",
+  "required": ["id", "title", "requiredCapabilities"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "pattern": "^n[0-9]+$" },
+    "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "requiredCapabilities": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 0,
+      "default": []
+    },
+    "assignedAgent": { "type": ["string", "null"] },
+    "leaseId": { "type": ["string", "null"] },
+    "state": {
+      "type": "string",
+      "enum": ["pending", "ready", "leased", "in_progress", "done", "failed", "skipped"],
+      "default": "pending"
+    },
+    "dependsOn": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "deliverable": { "type": "string" },
+    "verification": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "type": "string", "enum": ["file_exists", "command_exit_zero", "reviewer_tag"] },
+        "spec": { "type": "string" }
+      }
+    },
+    "attempts": { "type": "integer", "minimum": 0, "default": 0 },
+    "maxAttempts": { "type": "integer", "minimum": 1, "default": 2 }
+  }
+}

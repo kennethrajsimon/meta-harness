@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meta-harness://schemas/mission",
+  "title": "Mission",
+  "type": "object",
+  "required": ["title", "brief"],
+  "additionalProperties": false,
+  "properties": {
+    "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "brief": { "type": "string", "minLength": 1, "maxLength": 10000 },
+    "autoReplan": { "type": "boolean", "default": false },
+    "dag": {
+      "type": "object",
+      "required": ["nodes"],
+      "additionalProperties": false,
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "items": { "$ref": "meta-harness://schemas/dagNode" },
+          "minItems": 1,
+          "maxItems": 64
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": { "type": "string" },
+            "minItems": 2,
+            "maxItems": 2
+          }
+        }
+      }
+    }
+  }
+}

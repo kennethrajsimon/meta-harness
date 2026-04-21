@@ -1,0 +1,37 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Fleet runtime state — operator-local, never shipped in source
+.claude/agent-activity.log
+.claude/agent-commands.json
+.claude/agent-heartbeats/
+.claude/settings.local.json
+.claude/settings.json
+
+# Meta Harness runtime data — per-install, includes keys + mission state
+meta-harness/data/
+# ...but keep the default rate table, which IS source
+!meta-harness/data/metering/
+!meta-harness/data/metering/rates.json
+
+# Keys + secrets — belt-and-braces (never commit, regardless of location)
+*.key
+*.pem
+*.secret
+admin-token.hash
+
+# Logs
+*.log

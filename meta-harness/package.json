@@ -1,0 +1,30 @@
+{
+  "name": "meta-harness",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local orchestration layer above the fleet of Claude Code subagents. Implements the Super Harness architecture (Protocol, Identity, Discovery, Orchestration, Safety) at project scale.",
+  "bin": {
+    "meta-harness": "bin/meta-harness.js",
+    "meta-broker": "bin/meta-broker.js",
+    "meta-mcp": "bin/meta-mcp.js"
+  },
+  "scripts": {
+    "start": "node bin/meta-harness.js",
+    "broker": "node bin/meta-broker.js",
+    "mcp": "node bin/meta-mcp.js",
+    "test": "node test/e2e.mission.test.js"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "tweetnacl": "^1.0.3",
+    "tweetnacl-util": "^0.15.1",
+    "ws": "^8.18.0"
+  },
+  "optionalDependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

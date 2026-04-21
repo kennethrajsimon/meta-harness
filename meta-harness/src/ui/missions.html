@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Meta Harness — Missions</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace; background: #0b0f1a; color: #d4deea; }
+  header { padding: 14px 22px; background: linear-gradient(135deg, #0c1424, #12182a); border-bottom: 1px solid #1c2840; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+  header h1 { margin: 0; font-size: 16px; letter-spacing: .08em; color: #9ff; text-transform: uppercase; }
+  header .status { font-size: 12px; padding: 4px 10px; border: 1px solid #26425a; border-radius: 3px; }
+  header .status.halted { color: #ff6a6a; border-color: #ff6a6a; }
+  header .spacer { flex: 1; }
+  main { display: grid; grid-template-columns: minmax(360px, 1fr) minmax(420px, 1.2fr); gap: 0; height: calc(100vh - 66px); }
+  section { padding: 18px 22px; overflow-y: auto; border-right: 1px solid #1c2840; }
+  section:last-child { border-right: 0; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: #7ab; margin: 6px 0 14px; }
+  label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #6a87a5; margin-bottom: 4px; }
+  input, textarea, button, select { font: inherit; background: #0e1628; color: inherit; border: 1px solid #22324a; padding: 7px 9px; border-radius: 3px; box-sizing: border-box; }
+  input, textarea, select { width: 100%; margin-bottom: 12px; }
+  textarea { resize: vertical; min-height: 60px; }
+  button { cursor: pointer; background: #1c3d5e; border-color: #2a5a8a; color: #cfefff; padding: 8px 16px; }
+  button:hover { background: #285586; }
+  button.danger { background: #5a1a1a; border-color: #a83a3a; color: #ffd5d5; }
+  button.danger:hover { background: #823030; }
+  .row { display: flex; gap: 10px; align-items: center; }
+  .row > * { margin-bottom: 0; }
+  .mission { background: #0e1628; border: 1px solid #1c2840; border-radius: 5px; padding: 12px 14px; margin-bottom: 12px; }
+  .mission .head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .mission .head .title { font-weight: 600; color: #e8f2ff; }
+  .mission .head .id { font-size: 11px; color: #5c7a96; }
+  .mission .meta { font-size: 11px; color: #7a96b2; margin: 4px 0 10px; }
+  .mission .brief { font-size: 12px; color: #9db0c6; margin-bottom: 8px; white-space: pre-wrap; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
+  .b-running { background: #184d70; color: #9ff; }
+  .b-completed { background: #1a4a2c; color: #9fd9a5; }
+  .b-failed { background: #4a1a1a; color: #ff9f9f; }
+  .b-partial_failure { background: #4a3a14; color: #ffd78a; }
+  .b-cancelled { background: #333; color: #bbb; }
+  .b-planning { background: #3a2a5a; color: #cfaaff; }
+  .dag-node { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 12px; border-bottom: 1px dotted #1c2840; }
+  .dag-node:last-child { border-bottom: 0; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .s-pending { background: #5c7a96; }
+  .s-ready { background: #ffca6a; }
+  .s-leased, .s-in_progress { background: #00dfff; }
+  .s-done { background: #6ae0a1; }
+  .s-failed { background: #ff6a6a; }
+  .s-skipped { background: #555; }
+  .events { font-size: 11px; max-height: 260px; overflow-y: auto; background: #070c18; padding: 8px 10px; border: 1px solid #152038; border-radius: 3px; }
+  .events .ev { padding: 2px 0; color: #a6bcd3; }
+  .events .ev .t { color: #5c7a96; }
+  .audit { font-size: 11px; max-height: 200px; overflow-y: auto; background: #070c18; padding: 8px; border: 1px solid #152038; border-radius: 3px; }
+  .audit .a { padding: 2px 0; }
+  .error { color: #ff9f9f; font-size: 12px; margin-top: 4px; }
+
+  /* Phase-2 additions */
+  .health { display: flex; gap: 10px; flex-wrap: wrap; padding: 8px 22px; background: #0a1020; border-bottom: 1px solid #152038; font-size: 11px; }
+  .health .metric { display: flex; gap: 6px; align-items: baseline; padding: 3px 10px; background: #0e1628; border: 1px solid #1c2840; border-radius: 3px; }
+  .health .metric .k { color: #6a87a5; text-transform: uppercase; letter-spacing: .08em; }
+  .health .metric .v { color: #9ff; font-weight: 600; }
+  .health .metric.warn .v { color: #ffaa44; }
+  .health .metric.danger .v { color: #ff6a6a; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 10px; }
+  .tabs button { background: #0e1628; color: #7a96b2; padding: 5px 12px; border-radius: 3px 3px 0 0; }
+  .tabs button.active { background: #1c3d5e; color: #cfefff; }
+  .usage-card { background: #0e1628; border: 1px solid #1c2840; border-radius: 5px; padding: 10px 14px; margin-bottom: 10px; font-size: 12px; }
+  .usage-card h3 { margin: 0 0 6px; font-size: 13px; color: #e8f2ff; }
+  .usage-card .dis { font-size: 10px; color: #7ab; font-style: italic; margin-top: 6px; }
+  .usage-row { display: flex; justify-content: space-between; padding: 2px 0; border-bottom: 1px dotted #1c2840; }
+  .usage-row:last-child { border-bottom: 0; }
+  .peer-chip { display: inline-block; padding: 2px 7px; background: #3a2a5a; color: #cfaaff; border-radius: 10px; font-size: 10px; margin-left: 6px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Meta Harness · Missions</h1>
+  <span id="connStatus" class="status">WS: connecting…</span>
+  <span id="haltStatus" class="status">OK</span>
+  <span class="spacer"></span>
+  <button id="btnRefresh">Refresh</button>
+  <button id="btnHalt" class="danger">Halt</button>
+  <button id="btnResume">Resume</button>
+</header>
+<div class="health" id="health"></div>
+<main>
+  <section>
+    <h2>New Mission</h2>
+    <label>Admin token (stays local)</label>
+    <input id="adminToken" type="password" placeholder="META_HARNESS_ADMIN_TOKEN">
+    <label>Title</label>
+    <input id="mTitle" placeholder="Short mission title">
+    <label>Brief</label>
+    <textarea id="mBrief" placeholder="What should the fleet do? e.g. 'Add a /v1/health endpoint returning {status:ok}. Include review.'"></textarea>
+    <div class="row">
+      <button id="btnSubmit">Submit Mission</button>
+      <span id="submitError" class="error"></span>
+    </div>
+
+    <h2 style="margin-top: 26px;">Live Events</h2>
+    <div id="events" class="events"></div>
+
+    <h2 style="margin-top: 26px;">Audit (last 50)</h2>
+    <div id="audit" class="audit"></div>
+  </section>
+
+  <section>
+    <div class="tabs">
+      <button id="tabMissions" class="active" onclick="selectTab('missions')">Missions</button>
+      <button id="tabUsage" onclick="selectTab('usage')">Usage</button>
+      <button id="tabPeers" onclick="selectTab('peers')">Peers</button>
+    </div>
+    <div id="missions"></div>
+    <div id="usage" style="display:none;"></div>
+    <div id="peers" style="display:none;"></div>
+  </section>
+</main>
+
+<script>
+const $ = sel => document.querySelector(sel);
+const base = location.origin;
+let adminToken = localStorage.getItem('mh-admin-token') || '';
+if (adminToken) $('#adminToken').value = adminToken;
+$('#adminToken').addEventListener('input', e => { adminToken = e.target.value; localStorage.setItem('mh-admin-token', adminToken); });
+
+async function api(method, path, body, useAdmin = false) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (useAdmin) headers['X-Admin-Token'] = adminToken;
+  const res = await fetch(base + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+  const text = await res.text();
+  let parsed = null; try { parsed = text ? JSON.parse(text) : null; } catch { parsed = text; }
+  return { status: res.status, body: parsed };
+}
+
+function renderDag(mission) {
+  return mission.dag.nodes.map(n => `
+    <div class="dag-node">
+      <span class="dot s-${n.state}"></span>
+      <span style="flex:1;">${n.id} · ${escapeHtml(n.title || '')}</span>
+      <span style="color:#7a96b2;">${n.assignedAgent || ''}</span>
+      <span style="color:#5c7a96;">${n.state}</span>
+    </div>`).join('');
+}
+
+function renderMissions(missions) {
+  const el = $('#missions');
+  if (!missions.length) { el.innerHTML = '<em style="color:#5c7a96;">No missions yet.</em>'; return; }
+  el.innerHTML = missions.map(m => `
+    <div class="mission" id="mission-${m.id}">
+      <div class="head">
+        <div><span class="title">${escapeHtml(m.title)}</span> <span class="badge b-${m.status}">${m.status}</span></div>
+        <div class="id">${m.id}</div>
+      </div>
+      <div class="meta">created ${m.createdAt || ''} · ${m.dag.nodes.length} nodes</div>
+      <div class="brief">${escapeHtml(m.brief || '')}</div>
+      <div>${renderDag(m)}</div>
+      <div class="row" style="margin-top: 10px;">
+        <button onclick="cancelMission('${m.id}')" class="danger" ${['completed','failed','cancelled'].includes(m.status) ? 'disabled style="opacity:.4;cursor:not-allowed"' : ''}>Cancel</button>
+      </div>
+    </div>`).join('');
+}
+
+async function refresh() {
+  const r = await api('GET', '/v1/missions');
+  if (r.status === 200) renderMissions(r.body.missions);
+  const h = await api('GET', '/v1/halt');
+  const halted = h.body && h.body.halted;
+  $('#haltStatus').textContent = halted ? 'HALTED' : 'OK';
+  $('#haltStatus').className = 'status' + (halted ? ' halted' : '');
+  const a = await api('GET', '/v1/audit?limit=50');
+  if (a.status === 200) {
+    const rows = (a.body.entries || []).slice(-50).reverse();
+    $('#audit').innerHTML = rows.map(e => `<div class="a"><span style="color:#5c7a96">${(e.ts||'').slice(11,19)}</span> <b>${e.action}</b> ${e.actor || ''} ${e.missionId || ''} ${e.nodeId || ''}</div>`).join('');
+  }
+  refreshHealth();
+  if (currentTab === 'usage') refreshUsage();
+  if (currentTab === 'peers') refreshPeers();
+}
+
+// ─── Phase 2: Health strip ────────────────────────────────────────────────
+async function refreshHealth() {
+  const m = await api('GET', '/v1/metrics.json');
+  if (m.status !== 200) return;
+  const g = m.body.gauges || {};
+  const c = m.body.counters || {};
+  const total = n => Object.entries(c).filter(([k]) => k.startsWith(n)).reduce((s, [,v]) => s + v, 0);
+  const metric = (k, v, cls = '') => `<div class="metric ${cls}"><span class="k">${k}</span><span class="v">${v}</span></div>`;
+  $('#health').innerHTML = [
+    metric('AGENTS', g.mh_agents_registered || 0),
+    metric('RUNNING', g.mh_missions_running || 0),
+    metric('PEERS', g.mh_peers_connected || 0),
+    metric('KILL', g.mh_killswitch_active ? 'ON' : 'OFF', g.mh_killswitch_active ? 'danger' : ''),
+    metric('MISSIONS ✓', c.mh_missions_total + '' === 'undefined' ? total('mh_missions_total') : total('mh_missions_total')),
+    metric('CREATED', c.mh_missions_created_total || 0),
+    metric('LEASES', total('mh_leases_total')),
+    metric('FAILS', total('mh_node_failures_total'), (total('mh_node_failures_total') > 0 ? 'warn' : ''))
+  ].join('');
+}
+
+// ─── Phase 2: Usage tab ───────────────────────────────────────────────────
+async function refreshUsage() {
+  const u = await api('GET', '/v1/usage');
+  if (u.status !== 200) { $('#usage').innerHTML = '<em style="color:#ff9f9f">usage unavailable</em>'; return; }
+  const s = u.body;
+  const card = (title, body) => `<div class="usage-card"><h3>${title}</h3>${body}</div>`;
+  const row = (k, v) => `<div class="usage-row"><span>${escapeHtml(k)}</span><span>${v}</span></div>`;
+  function renderBucket(obj) {
+    const keys = Object.keys(obj).sort();
+    if (keys.length === 0) return '<em style="color:#5c7a96">none</em>';
+    return keys.map(k => row(k, `${(obj[k].leaseHeldMs/1000).toFixed(1)}s · ${obj[k].estCostCents}¢ · ${obj[k].count} events${obj[k].unmeteredCount ? ' · ' + obj[k].unmeteredCount + ' unmetered' : ''}`)).join('');
+  }
+  $('#usage').innerHTML = [
+    card('Total (time-based estimate)',
+      row('events', s.totalEvents)
+      + row('lease time', (s.totalLeaseHeldMs / 1000).toFixed(1) + 's')
+      + row('est. cost', s.totalEstCostCents + '¢')
+      + row('unmetered', s.unmeteredCount)
+      + `<div class="dis">${escapeHtml(s.disclaimer || '')}</div>`),
+    card('By agent', renderBucket(s.byAgent || {})),
+    card('By model', renderBucket(s.byModel || {})),
+    card('By mission', renderBucket(s.byMission || {}))
+  ].join('');
+}
+
+// ─── Phase 2: Peers tab ───────────────────────────────────────────────────
+async function refreshPeers() {
+  const p = await api('GET', '/v1/peers');
+  const ag = await api('GET', '/v1/agents?includeFederated=1');
+  const peers = p.body && p.body.peers || [];
+  const agents = ag.body && ag.body.agents || [];
+  const localCount = agents.filter(a => a.source === 'local').length;
+  const peerAgents = agents.filter(a => a.source && a.source.startsWith('peer:'));
+
+  const peerList = peers.length === 0
+    ? '<em style="color:#5c7a96">No peers connected. Add one via POST /v1/peers.</em>'
+    : peers.map(pe => `<div class="usage-row"><span>${escapeHtml(pe.id)}</span><span>${escapeHtml(pe.url || '—')}</span><span style="color:#5c7a96">synced ${(pe.lastSyncAt||'').slice(11,19)}</span></div>`).join('');
+  const agentList = peerAgents.length === 0
+    ? '<em style="color:#5c7a96">No federated agents discovered yet. Try POST /v1/peers/:id/refresh.</em>'
+    : peerAgents.map(a => `<div class="usage-row"><span>${escapeHtml(a.agent)}<span class="peer-chip">${escapeHtml(a.source)}</span></span><span style="color:#7a96b2">${(a.capabilities||[]).slice(0,4).join(', ')}</span></div>`).join('');
+
+  $('#peers').innerHTML = `
+    <div class="usage-card"><h3>Local agents: ${localCount}</h3></div>
+    <div class="usage-card"><h3>Peers (${peers.length})</h3>${peerList}</div>
+    <div class="usage-card"><h3>Federated agents (${peerAgents.length})</h3>${agentList}</div>
+  `;
+}
+
+let currentTab = 'missions';
+function selectTab(name) {
+  currentTab = name;
+  for (const t of ['missions', 'usage', 'peers']) {
+    document.getElementById(t).style.display = (name === t) ? '' : 'none';
+    document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1)).classList.toggle('active', name === t);
+  }
+  if (name === 'usage') refreshUsage();
+  if (name === 'peers') refreshPeers();
+}
+window.selectTab = selectTab;
+
+async function submitMission() {
+  $('#submitError').textContent = '';
+  const title = $('#mTitle').value.trim();
+  const brief = $('#mBrief').value.trim();
+  if (!title || !brief) { $('#submitError').textContent = 'title + brief required'; return; }
+  if (!adminToken) { $('#submitError').textContent = 'admin token required'; return; }
+  const r = await api('POST', '/v1/missions', { title, brief }, true);
+  if (r.status !== 201) { $('#submitError').textContent = 'rejected: ' + r.status + ' ' + JSON.stringify(r.body); return; }
+  $('#mTitle').value = ''; $('#mBrief').value = '';
+  refresh();
+}
+
+async function cancelMission(id) {
+  const r = await api('POST', '/v1/missions/' + id + '/cancel', {}, true);
+  if (r.status !== 200) alert('cancel failed: ' + r.status);
+  refresh();
+}
+
+async function halt() {
+  if (!confirm('Halt all missions?')) return;
+  const r = await api('POST', '/v1/halt', { reason: 'operator halt from UI' }, true);
+  if (r.status !== 200) alert('halt failed: ' + r.status);
+  refresh();
+}
+
+async function resume() {
+  const r = await api('POST', '/v1/resume', {}, true);
+  if (r.status !== 200) alert('resume failed: ' + r.status);
+  refresh();
+}
+
+$('#btnSubmit').onclick = submitMission;
+$('#btnRefresh').onclick = refresh;
+$('#btnHalt').onclick = halt;
+$('#btnResume').onclick = resume;
+
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function pushEvent(ev) {
+  const el = $('#events');
+  const ts = (ev.ts || '').slice(11, 19);
+  const line = `<div class="ev"><span class="t">${ts}</span> <b>${ev.type}</b> ${escapeHtml(JSON.stringify(ev.data || {}))}</div>`;
+  el.insertAdjacentHTML('afterbegin', line);
+  while (el.children.length > 200) el.removeChild(el.lastChild);
+}
+
+function connect() {
+  const url = location.origin.replace(/^http/, 'ws') + '/v1/events';
+  const ws = new WebSocket(url);
+  ws.onopen = () => { $('#connStatus').textContent = 'WS: connected'; refresh(); };
+  ws.onclose = () => { $('#connStatus').textContent = 'WS: disconnected'; setTimeout(connect, 2000); };
+  ws.onerror = () => { $('#connStatus').textContent = 'WS: error'; };
+  ws.onmessage = m => {
+    try {
+      const ev = JSON.parse(m.data);
+      pushEvent(ev);
+      if (['mission_created','node_done','node_failed','mission_completed','mission_cancelled','lease_issued','agent_registered','halted','resumed'].includes(ev.type)) {
+        refresh();
+      }
+    } catch {}
+  };
+}
+
+connect();
+</script>
+</body>
+</html>
